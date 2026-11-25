@@ -1,0 +1,100 @@
+<app-page-header title="Usuarios"
+  [description]="isAdmin() ? 'Gestores y cajeros del sistema. Los creados por gestores esperan su aprobación.' : 'Los usuarios que cree quedarán pendientes hasta que un administrador los apruebe.'">
+  <button class="btn btn--outline" type="button" (click)="bulk()"><app-icon name="upload" /> Carga masiva</button>
+  <button class="btn btn--primary" type="button" (click)="create()"><app-icon name="plus" /> Nuevo usuario</button>
+</app-page-header>
+
+<section class="panel">
+  <div class="toolbar">
+    <label class="sr-only" for="user-search">Buscar</label>
+    <input id="user-search" class="input grow" type="search" [formControl]="search"
+           placeholder="Buscar por usuario, nombre, correo o identificación" />
+    <label class="sr-only" for="user-role">Rol</label>
+    <select id="user-role" class="select" [ngModel]="filters().rolId" (ngModelChange)="setFilter({ rolId: $event })">
+      <option [ngValue]="null">Todos los roles</option>
+      @if (isAdmin()) { <option [ngValue]="1">Administrador</option> }
+      <option [ngValue]="2">Gestor</option>
+      <option [ngValue]="3">Cajero</option>
+    </select>
+    <label class="sr-only" for="user-status">Estado</label>
+    <select id="user-status" class="select" [ngModel]="filters().statusId" (ngModelChange)="setFilter({ statusId: $event })">
+      <option [ngValue]="null">Todos los estados</option>
+      <option value="ACT">Activo</option>
+      <option value="PEN">Pendiente de aprobación</option>
+      <option value="BLO">Bloqueado</option>
+      <option value="INA">Inactivo</option>
+    </select>
+  </div>
+
+  @if (result(); as r) {
+    @if (r.items.length) {
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Usuario</th><th>Nombre</th><th>Rol</th><th>Estado</th><th>Sesión</th><th>Creado por</th><th class="actions"><span class="sr-only">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (u of r.items; track u.id) {
+              <tr>
+                <td>
+                  <div class="primary">{{ u.username }}</div>
+                  <div class="subtle">{{ u.email }}</div>
+                </td>
+                <td>
+                  {{ u.fullName }}
+                  <div class="subtle">{{ u.identification }}</div>
+                </td>
+                <td>{{ u.role === 'ADMINISTRADOR' ? 'Administrador' : u.role === 'GESTOR' ? 'Gestor' : 'Cajero' }}</td>
+                <td>
+                  <app-status [code]="u.statusId" [label]="u.status" />
+                  @if (u.failedAttempts > 0 && u.statusId === 'ACT') {
+                    <div class="subtle">{{ u.failedAttempts }} intento(s) fallido(s)</div>
+                  }
+                </td>
+                <td>
+                  @if (u.sessionActive) { <span class="chip chip--ok">Activa</span> } @else { <span class="subtle">Inactiva</span> }
+                </td>
+                <td>
+                  {{ u.createdBy ?? 'Sistema' }}
+                  <div class="subtle">{{ u.creationDate | date: 'd MMM y' }}</div>
+                </td>
+                <td class="actions">
+                  @if (isAdmin() && u.role !== 'ADMINISTRADOR') {
+                    @if (u.statusId === 'PEN') {
+                      <button class="btn btn--dark btn--sm" type="button" (click)="approve(u)">Aprobar</button>
+                      <button class="icon-btn" type="button" (click)="reject(u)" matTooltip="Rechazar" aria-label="Rechazar"><app-icon name="x" /></button>
+                    } @else {
+                      @if (u.statusId === 'ACT') {
+                        <button class="icon-btn" type="button" (click)="setStatus(u, 'BLO')" matTooltip="Bloquear" aria-label="Bloquear"><app-icon name="lock" /></button>
+                        <button class="icon-btn" type="button" (click)="setStatus(u, 'INA')" matTooltip="Inactivar" aria-label="Inactivar"><app-icon name="power" /></button>
+                      } @else {
+                        <button class="icon-btn" type="button" (click)="setStatus(u, 'ACT')"
+                                [matTooltip]="u.statusId === 'BLO' ? 'Desbloquear' : 'Activar'"
+                                [attr.aria-label]="u.statusId === 'BLO' ? 'Desbloquear' : 'Activar'">
+                          <app-icon [name]="u.statusId === 'BLO' ? 'unlock' : 'check'" />
+                        </button>
+                      }
+                    }
+                    <button class="icon-btn" type="button" (click)="edit(u)" matTooltip="Editar" aria-label="Editar"><app-icon name="edit" /></button>
+                    <button class="icon-btn" type="button" (click)="remove(u)" matTooltip="Eliminar" aria-label="Eliminar"><app-icon name="trash" /></button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="pager">
+        <span>{{ r.total }} usuario(s), página {{ r.page }} de {{ r.totalPages || 1 }}</span>
+        <div>
+          <button class="icon-btn" type="button" [disabled]="r.page <= 1" (click)="setFilter({ page: r.page - 1 })" aria-label="Página anterior"><app-icon name="left" /></button>
+          <button class="icon-btn" type="button" [disabled]="r.page >= r.totalPages" (click)="setFilter({ page: r.page + 1 })" aria-label="Página siguiente"><app-icon name="right" /></button>
+        </div>
+      </div>
+    } @else {
+      <app-empty icon="users" title="No hay usuarios con esos filtros" hint="Cambie los filtros o cree un usuario nuevo." />
+    }
+  }
+</section>

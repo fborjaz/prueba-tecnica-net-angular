@@ -1,0 +1,99 @@
+@if (data(); as d) {
+  <section class="intro">
+    <p class="intro__hello">{{ greeting() }},</p>
+    <h1 class="intro__name sign">{{ d.user.fullName }}</h1>
+  </section>
+
+  <div class="layout">
+    <!-- Contador de turnos atendidos hoy, con la estética del tablero de turnos -->
+    <section class="counter" aria-labelledby="counter-title">
+      <div class="counter__digits" aria-hidden="true">
+        @for (digit of attendedDigits(); track $index) { <span>{{ digit }}</span> }
+      </div>
+      <div>
+        <h2 id="counter-title" class="counter__title">
+          <span class="sr-only">{{ d.attendedTurnsToday }}</span> turnos atendidos hoy
+        </h2>
+        <p class="counter__scope">{{ d.attendedTurnsScope }}</p>
+      </div>
+    </section>
+
+    <section class="panel profile" aria-label="Sus datos">
+      <div class="panel__head"><h2>Sus datos</h2><app-status [code]="d.user.statusId" [label]="d.user.status" /></div>
+      <dl class="panel__body">
+        <div><dt>Rol</dt><dd>{{ roleLabel() }}</dd></div>
+        <div><dt>Usuario</dt><dd>{{ d.user.username }}</dd></div>
+        <div><dt>Correo</dt><dd>{{ d.user.email }}</dd></div>
+        <div><dt>Identificación</dt><dd>{{ d.user.identification }}</dd></div>
+        <div><dt>Último ingreso</dt><dd>{{ d.user.lastLogin ? (d.user.lastLogin | date: 'd MMM y, HH:mm') : 'Primer ingreso' }}</dd></div>
+        <div><dt>Registrado</dt><dd>{{ d.user.creationDate | date: 'd MMM y' }}</dd></div>
+      </dl>
+    </section>
+  </div>
+
+  @if (d.user.role === 'GESTOR' || d.user.role === 'ADMINISTRADOR') {
+    <section class="panel">
+      <div class="panel__head">
+        <h2>Usuarios pendientes de aprobación</h2>
+        <a class="btn btn--outline btn--sm" routerLink="/users">Ver usuarios</a>
+      </div>
+      @if (d.pendingApprovals.length) {
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Creado por</th><th>Fecha</th></tr></thead>
+            <tbody>
+              @for (u of d.pendingApprovals; track u.id) {
+                <tr>
+                  <td class="primary">{{ u.username }}</td>
+                  <td>{{ u.fullName }}</td>
+                  <td>{{ u.role === 'GESTOR' ? 'Gestor' : 'Cajero' }}</td>
+                  <td>{{ u.createdBy }}</td>
+                  <td class="nowrap">{{ u.creationDate | date: 'd MMM, HH:mm' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <app-empty icon="approve" title="No hay usuarios esperando aprobación"
+                   [hint]="d.user.role === 'GESTOR' ? 'Los usuarios que usted cree aparecerán aquí hasta que un administrador los apruebe.' : 'Los usuarios creados por gestores aparecerán aquí.'" />
+      }
+    </section>
+  }
+
+  @if (d.user.role === 'CAJERO') {
+    <section class="panel">
+      <div class="panel__head">
+        <h2>Sus cajas</h2>
+        <a class="btn btn--primary btn--sm" routerLink="/cashier">
+          {{ d.currentCashSession ? 'Continuar atendiendo' : 'Abrir caja' }}
+        </a>
+      </div>
+      @if (d.assignedCashes.length) {
+        <ul class="cash-list">
+          @for (c of d.assignedCashes; track c.id) {
+            <li>
+              <app-icon name="cash" />
+              <strong>{{ c.description }}</strong>
+              @if (c.currentSession) {
+                <span class="chip" [class]="c.currentSession.username === d.user.username ? 'chip chip--ok' : 'chip chip--warn'">
+                  {{ c.currentSession.username === d.user.username ? 'Abierta por usted' : 'En uso por ' + c.currentSession.username }}
+                </span>
+              } @else {
+                <span class="chip">Disponible</span>
+              }
+            </li>
+          }
+        </ul>
+      } @else {
+        <app-empty icon="cash" title="Aún no tiene cajas asignadas" hint="Un gestor debe asignarle una caja para que pueda atender turnos." />
+      }
+    </section>
+  }
+} @else if (failed()) {
+  <app-empty icon="alert" title="No se pudo cargar la información" hint="Revise su conexión e intente de nuevo.">
+    <button class="btn btn--outline" type="button" (click)="load()"><app-icon name="refresh" /> Reintentar</button>
+  </app-empty>
+} @else {
+  <div class="skeleton" aria-busy="true" aria-label="Cargando"></div>
+}

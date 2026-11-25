@@ -1,0 +1,25 @@
+:host { display: grid; gap: 1.5rem; }
+app-page-header { margin-bottom: -1.5rem; }
+
+.top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 1.5rem;
+  align-items: stretch;
+  @media (max-width: 1000px) { grid-template-columns: 1fr; }
+}
+
+.assign__body {
+  display: grid;
+  gap: 1rem;
+  .btn { justify-self: start; }
+}
+
+.display { height: 100%; }
+.display ::ng-deep .board { height: 100%; align-content: center; }
+
+.tally { margin-left: auto; font-size: var(--fs-sm); color: var(--ink-2); }
+
+.code { font-size: 1.5rem; letter-spacing: 0.02em; }
+
+.select--inline { min-height: 32px !important; padding-top: 0.25rem; padding-bottom: 0.25rem; font-size: var(--fs-sm); }

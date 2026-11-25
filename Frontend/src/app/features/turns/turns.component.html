@@ -1,0 +1,103 @@
+<app-page-header title="Turnos"
+  description="Asigne turnos a las cajas. El código lleva el prefijo del tipo de atención y se numera cada día." />
+
+<div class="top">
+  <form class="panel assign" [formGroup]="form" (ngSubmit)="assign()" novalidate>
+    <div class="panel__head"><h2>Asignar turno</h2></div>
+    <div class="panel__body assign__body">
+      <div class="field">
+        <label for="t-type">Tipo de atención</label>
+        <select id="t-type" class="select" formControlName="attentionTypeId"
+                [class.is-invalid]="form.controls.attentionTypeId.invalid && form.controls.attentionTypeId.touched">
+          <option [ngValue]="null" disabled>Elegir tipo…</option>
+          @for (t of types(); track t.id) { <option [ngValue]="t.id">{{ t.id }}, {{ t.description }}</option> }
+        </select>
+        <app-field-error [control]="form.controls.attentionTypeId" />
+      </div>
+      <div class="field">
+        <label for="t-cash">Caja</label>
+        <select id="t-cash" class="select" formControlName="cashId"
+                [class.is-invalid]="form.controls.cashId.invalid && form.controls.cashId.touched">
+          <option [ngValue]="null" disabled>Elegir caja…</option>
+          @for (c of assignable(); track c.id) {
+            <option [ngValue]="c.id">{{ c.description }}, abierta por {{ c.currentSession!.username }}</option>
+          }
+        </select>
+        <app-field-error [control]="form.controls.cashId" />
+        @if (cashes().length && !hasCashiers()) {
+          <span class="hint">Ninguna caja tiene cajeros asignados. Asígnelos en Cajas.</span>
+        } @else if (cashes().length && !assignable().length) {
+          <span class="hint">No hay cajas abiertas. Podrá asignar turnos cuando un cajero abra su caja.</span>
+        }
+      </div>
+      <button class="btn btn--primary" type="submit" [disabled]="saving()">
+        @if (saving()) { <span class="spinner"></span> Generando… } @else { <app-icon name="ticket" /> Generar turno }
+      </button>
+    </div>
+  </form>
+
+  <app-turn-display class="display" label="Último turno asignado" [code]="lastTurn()?.code ?? null"
+    [meta]="lastTurn() ? lastTurn()!.attentionType + ', ' + lastTurn()!.cashDescription : 'Genere un turno para verlo aquí.'" />
+</div>
+
+<section class="panel">
+  <div class="toolbar">
+    <label class="sr-only" for="t-date">Fecha</label>
+    <input id="t-date" class="input" type="date" [ngModel]="date()" (ngModelChange)="setFilter('date', $event)" />
+    <label class="sr-only" for="t-fcash">Caja</label>
+    <select id="t-fcash" class="select" [ngModel]="cashFilter()" (ngModelChange)="setFilter('cash', $event)">
+      <option [ngValue]="null">Todas las cajas</option>
+      @for (c of cashes(); track c.id) { <option [ngValue]="c.id">{{ c.description }}</option> }
+    </select>
+    <label class="sr-only" for="t-fstatus">Estado</label>
+    <select id="t-fstatus" class="select" [ngModel]="statusFilter()" (ngModelChange)="setFilter('status', $event)">
+      <option [ngValue]="null">Todos los estados</option>
+      <option [ngValue]="1">Pendiente</option>
+      <option [ngValue]="2">En atención</option>
+      <option [ngValue]="3">Atendido</option>
+      <option [ngValue]="4">Anulado</option>
+    </select>
+    <span class="tally">{{ counts().total }} turnos: {{ counts().pending }} en espera, {{ counts().attended }} atendidos</span>
+  </div>
+
+  @if (turns(); as list) {
+    @if (list.length) {
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th>Turno</th><th>Tipo</th><th>Caja</th><th>Estado</th><th>Cliente</th><th>Atendió</th><th>Hora</th><th class="actions"><span class="sr-only">Acciones</span></th></tr>
+          </thead>
+          <tbody>
+            @for (t of list; track t.id) {
+              <tr>
+                <td><span class="code sign">{{ t.code }}</span></td>
+                <td>{{ t.attentionType }}</td>
+                <td>
+                  @if (t.statusId === 1) {
+                    <label class="sr-only" [for]="'move-' + t.id">Mover a caja</label>
+                    <select class="select select--inline" [id]="'move-' + t.id" [ngModel]="t.cashId" (ngModelChange)="move(t, $event)">
+                      @for (c of moveOptions(t); track c.id) { <option [ngValue]="c.id">{{ c.description }}</option> }
+                    </select>
+                  } @else { {{ t.cashDescription }} }
+                </td>
+                <td><app-status [code]="t.statusId" [label]="t.status" /></td>
+                <td>{{ t.clientName ?? '—' }}</td>
+                <td>{{ t.attendedBy ?? '—' }}</td>
+                <td class="nowrap">{{ t.date | date: 'HH:mm' }}</td>
+                <td class="actions">
+                  @if (t.statusId === 1) {
+                    <button class="icon-btn" type="button" (click)="remove(t)" matTooltip="Eliminar turno" [attr.aria-label]="'Eliminar ' + t.code">
+                      <app-icon name="trash" />
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <app-empty icon="ticket" title="No hay turnos para esta fecha" [hint]="isToday() ? 'Los turnos que genere aparecerán aquí.' : 'Elija otra fecha o cambie los filtros.'" />
+    }
+  }
+</section>

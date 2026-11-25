@@ -1,0 +1,75 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+}
+
+.cash {
+  display: flex;
+  flex-direction: column;
+
+  &--off { opacity: 0.7; }
+
+  &__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1.125rem 1.25rem 0.875rem;
+    h2 { font: 800 1.75rem/1 var(--font-sign); margin-bottom: 0.5rem; }
+  }
+}
+
+/* Dos puestos por caja: el límite de la regla de negocio se ve en la propia interfaz. */
+.seats {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0 1.25rem 1rem;
+}
+
+.seat {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 52px;
+  padding: 0.5rem 0.625rem;
+  border-radius: var(--r-control);
+
+  &--filled { background: #f5f7f9; }
+  &--empty {
+    justify-content: center;
+    border: 1.5px dashed var(--line);
+    color: var(--ink-3);
+    font-size: var(--fs-sm);
+  }
+
+  &__avatar {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--amber);
+    font-weight: 700;
+    flex: none;
+  }
+
+  &__info {
+    display: grid;
+    line-height: 1.25;
+    min-width: 0;
+    strong { font-size: var(--fs-sm); }
+  }
+
+  .icon-btn { margin-left: auto; }
+}
+
+.assign {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding: 0.875rem 1.25rem;
+  border-top: 1px solid var(--line-soft);
+  .select { min-height: 38px; }
+}

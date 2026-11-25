@@ -1,0 +1,69 @@
+<app-page-header title="Cajas"
+  description="Cada caja admite hasta 2 cajeros, y solo uno puede tenerla abierta a la vez.">
+  @if (isAdmin()) {
+    <button class="btn btn--primary" type="button" (click)="openForm()"><app-icon name="plus" /> Nueva caja</button>
+  }
+</app-page-header>
+
+@if (cashes(); as list) {
+  @if (list.length) {
+    <div class="grid">
+      @for (cash of list; track cash.id) {
+        <article class="panel cash" [class.cash--off]="!cash.active">
+          <header class="cash__head">
+            <div>
+              <h2>{{ cash.description }}</h2>
+              @if (cash.currentSession; as s) {
+                <span class="chip chip--ok">Abierta por {{ s.username }} desde {{ s.openedAt | date: 'HH:mm' }}</span>
+              } @else if (!cash.active) {
+                <span class="chip">Deshabilitada</span>
+              } @else {
+                <span class="subtle">Cerrada</span>
+              }
+            </div>
+            @if (isAdmin()) {
+              <div>
+                <button class="icon-btn" type="button" (click)="openForm(cash)" matTooltip="Editar" aria-label="Editar caja"><app-icon name="edit" /></button>
+                <button class="icon-btn" type="button" (click)="remove(cash)" matTooltip="Eliminar" aria-label="Eliminar caja"><app-icon name="trash" /></button>
+              </div>
+            }
+          </header>
+
+          <div class="seats" [attr.aria-label]="cash.cashiers.length + ' de ' + max + ' cajeros asignados'">
+            @for (seat of [0, 1]; track seat) {
+              @if (cash.cashiers[seat]; as c) {
+                <div class="seat seat--filled">
+                  <span class="seat__avatar">{{ c.fullName.charAt(0) }}</span>
+                  <div class="seat__info">
+                    <strong>{{ c.fullName }}</strong>
+                    <span class="subtle">{{ c.username }}</span>
+                  </div>
+                  <button class="icon-btn" type="button" (click)="unassign(cash, c.userId, c.username)"
+                          matTooltip="Quitar asignación" [attr.aria-label]="'Quitar a ' + c.username">
+                    <app-icon name="x" />
+                  </button>
+                </div>
+              } @else {
+                <div class="seat seat--empty">Puesto libre</div>
+              }
+            }
+          </div>
+
+          @if (cash.cashiers.length < max && cash.active) {
+            <div class="assign">
+              <label class="sr-only" [for]="'assign-' + cash.id">Cajero a asignar</label>
+              <select class="select" [id]="'assign-' + cash.id" [ngModel]="selection()[cash.id] ?? null"
+                      (ngModelChange)="select(cash.id, $event)">
+                <option [ngValue]="null">Elegir cajero…</option>
+                @for (u of available(cash); track u.id) { <option [ngValue]="u.id">{{ u.fullName }} ({{ u.username }})</option> }
+              </select>
+              <button class="btn btn--dark" type="button" [disabled]="!selection()[cash.id]" (click)="assign(cash)">Asignar</button>
+            </div>
+          }
+        </article>
+      }
+    </div>
+  } @else {
+    <app-empty icon="cash" title="No hay cajas registradas" [hint]="isAdmin() ? 'Cree la primera caja para empezar a asignar cajeros.' : 'Un administrador debe crear las cajas.'" />
+  }
+}
