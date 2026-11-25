@@ -1,0 +1,26 @@
+# Documento de la prueba (no se publica)
+*.pdf
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+logs/
+appsettings.Development.local.json
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+coverage/
+
+# Entorno
+.env
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
