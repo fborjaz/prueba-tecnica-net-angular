@@ -1,0 +1,56 @@
+<a class="skip-link" href="#main">Saltar al contenido</a>
+
+<div class="shell" [class.shell--drawer]="drawerOpen()">
+  <aside class="sidebar" aria-label="Navegación principal">
+    <div class="brand">
+      <span class="brand__mark" aria-hidden="true"></span>
+      <span class="brand__name sign">Ventanilla</span>
+    </div>
+
+    <nav class="nav" #nav>
+      <span class="nav__indicator" #indicator aria-hidden="true"></span>
+      @for (item of menu(); track item.id) {
+        <a [routerLink]="item.route" routerLinkActive="is-active" class="nav__link">
+          <app-icon [name]="item.icon" />
+          <span>{{ item.name }}</span>
+        </a>
+      } @empty {
+        @if (menuError()) {
+          <p class="nav__error">No se pudo cargar el menú.</p>
+        } @else {
+          @for (s of [1, 2, 3]; track s) { <span class="nav__skeleton"></span> }
+        }
+      }
+    </nav>
+
+    <div class="me">
+      <span class="me__avatar" aria-hidden="true">{{ initials() }}</span>
+      <div class="me__info">
+        <strong>{{ user()?.fullName }}</strong>
+        <span>{{ roleLabel() }}, {{ user()?.username }}</span>
+      </div>
+      <button class="icon-btn me__logout" type="button" (click)="logout()" matTooltip="Cerrar sesión" aria-label="Cerrar sesión">
+        <app-icon name="logout" />
+      </button>
+    </div>
+  </aside>
+
+  <button class="scrim" type="button" aria-label="Cerrar menú" (click)="drawerOpen.set(false)"></button>
+
+  <div class="main">
+    <div class="progress" [class.progress--on]="loading.active()" aria-hidden="true">
+      @if (loading.active()) { <mat-progress-bar mode="indeterminate" /> }
+    </div>
+
+    <header class="topbar">
+      <button class="icon-btn" type="button" (click)="drawerOpen.set(true)" aria-label="Abrir menú">
+        <app-icon name="menu" />
+      </button>
+      <span class="sign">Ventanilla</span>
+    </header>
+
+    <main id="main" class="content" tabindex="-1">
+      <router-outlet />
+    </main>
+  </div>
+</div>

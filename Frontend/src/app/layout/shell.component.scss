@@ -1,0 +1,109 @@
+:host { display: block; min-height: 100vh; }
+
+.skip-link {
+  position: absolute; left: 1rem; top: -3rem; z-index: 100;
+  padding: 0.5rem 0.75rem; background: var(--amber); color: var(--ink); border-radius: var(--r-control);
+  &:focus { top: 1rem; }
+}
+
+.shell { display: grid; grid-template-columns: var(--sidebar-w) minmax(0, 1fr); min-height: 100vh; }
+
+/* ------------------------------------------------------------------ barra lateral */
+
+.sidebar {
+  position: sticky; top: 0; height: 100vh;
+  display: flex; flex-direction: column;
+  background: var(--ink); color: #c8d1dc;
+}
+
+.brand {
+  display: flex; align-items: center; gap: 0.625rem;
+  padding: 1.375rem 1.25rem 1.5rem;
+  &__mark {
+    width: 22px; height: 22px; border: 2.5px solid var(--amber); border-radius: 3px;
+    background: linear-gradient(var(--amber) 0 0) center / 100% 2.5px no-repeat;
+  }
+  &__name { font-size: 1.75rem; color: #fff; }
+}
+
+.nav {
+  position: relative; flex: 1; display: flex; flex-direction: column; gap: 2px;
+  padding: 0 0.75rem; overflow-y: auto;
+
+  &__indicator {
+    position: absolute; left: 0; top: 0; width: 3px; height: 0;
+    background: var(--amber); border-radius: 0 3px 3px 0; visibility: hidden;
+  }
+
+  &__link {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.625rem 0.75rem; border-radius: var(--r-control);
+    color: #aab6c4; text-decoration: none; font-weight: 500; font-size: var(--fs-sm);
+    transition: background-color 0.15s, color 0.15s;
+    app-icon { width: 18px; height: 18px; color: #7d8ca0; transition: color 0.15s; }
+    &:hover { background: rgba(255, 255, 255, 0.05); color: #fff; }
+    &.is-active { background: rgba(242, 169, 0, 0.1); color: #fff; app-icon { color: var(--amber); } }
+    &:focus-visible { box-shadow: var(--focus); }
+  }
+
+  &__skeleton { height: 38px; border-radius: var(--r-control); background: rgba(255, 255, 255, 0.05); }
+  &__error { font-size: var(--fs-sm); color: #ff9c8a; padding: 0 0.75rem; }
+}
+
+.me {
+  display: flex; align-items: center; gap: 0.75rem;
+  margin: 0.75rem; padding: 0.75rem; border-radius: var(--r-panel);
+  background: rgba(255, 255, 255, 0.04);
+
+  &__avatar {
+    display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 50%;
+    background: #2c3a4b; color: var(--amber); font-weight: 700; font-size: var(--fs-sm);
+  }
+  &__info {
+    display: grid; min-width: 0; line-height: 1.3;
+    strong { color: #fff; font-size: var(--fs-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    span { font-size: var(--fs-xs); color: #8a98aa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  }
+  &__logout { margin-left: auto; color: #8a98aa; &:hover { color: #fff; background: rgba(255, 255, 255, 0.08); } }
+}
+
+/* ------------------------------------------------------------------ contenido */
+
+.main { position: relative; min-width: 0; }
+
+.progress {
+  position: sticky; top: 0; z-index: 20; height: 3px;
+  --mdc-linear-progress-active-indicator-color: var(--amber);
+  --mdc-linear-progress-track-color: transparent;
+  --mat-progress-bar-active-indicator-color: var(--amber);
+  --mat-progress-bar-track-color: transparent;
+}
+
+.content { padding: 2rem clamp(1rem, 3vw, 2.5rem) 3rem; max-width: 1360px; outline: none; }
+
+.topbar { display: none; }
+.scrim { display: none; }
+
+/* ------------------------------------------------------------------ móvil */
+
+@media (max-width: 900px) {
+  .shell { grid-template-columns: 1fr; }
+
+  .sidebar {
+    position: fixed; z-index: 40; left: 0; top: 0; width: min(280px, 84vw);
+    transform: translateX(-100%); transition: transform 0.25s ease;
+  }
+  .shell--drawer .sidebar { transform: none; }
+
+  .scrim {
+    position: fixed; inset: 0; z-index: 30; border: 0; background: rgba(27, 36, 48, 0.45);
+    opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  }
+  .shell--drawer .scrim { display: block; opacity: 1; pointer-events: auto; }
+
+  .topbar {
+    display: flex; align-items: center; gap: 0.5rem; padding: 0.625rem 1rem;
+    background: var(--surface); border-bottom: 1px solid var(--line);
+    .sign { font-size: 1.5rem; }
+  }
+}
