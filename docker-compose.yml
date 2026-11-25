@@ -1,0 +1,70 @@
+# Levanta todo el sistema:  docker compose up --build
+#   Frontend  http://localhost:8080
+#   API       http://localhost:5000/swagger
+#   Mailpit   http://localhost:8025  (correos de recuperación de contraseña)
+
+name: ventanilla
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${DB_PASSWORD:-Cash_Management_2026!}
+      MSSQL_PID: Developer
+      TZ: America/Guayaquil
+    ports:
+      - "1433:1433"
+    volumes:
+      - db-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q 'SELECT 1' || exit 1"]
+      # El primer arranque inicializa las bases del sistema y puede tardar varios minutos.
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 120s
+      start_interval: 5s
+
+  mail:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"
+
+  api:
+    build: ./Backend
+    # Si la base aún no responde en el primer arranque, Docker vuelve a intentarlo.
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+      mail:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=db,1433;Database=CashManagementDb;User Id=sa;Password=${DB_PASSWORD:-Cash_Management_2026!};TrustServerCertificate=True;Encrypt=False"
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:-docker-clave-de-firma-jwt-cash-management-2026}
+      Jwt__EncryptionKey: ${JWT_ENCRYPTION_KEY:-docker-clave-de-cifrado-jwe-cash-management-2026}
+      Encryption__Key: ${DATA_KEY:-docker-clave-aes-datos-sensibles-2026}
+      Encryption__HashKey: ${DATA_HASH_KEY:-docker-clave-hmac-busquedas-2026}
+      Smtp__Enabled: "true"
+      Smtp__Host: mail
+      Smtp__Port: "1025"
+      App__FrontendUrl: http://localhost:8080
+      Cors__Origins__0: http://localhost:8080
+    ports:
+      - "5000:8080"
+    volumes:
+      # Logs de Serilog (app, audit, security, errors). Ver: docker compose exec api ls logs
+      - api-logs:/app/logs
+
+  web:
+    build: ./Frontend
+    depends_on:
+      - api
+    ports:
+      - "8080:80"
+
+volumes:
+  db-data:
+  api-logs:
