@@ -1,0 +1,21 @@
+/* Estilos compartidos por login, recuperar y restablecer contraseña. */
+h1 { font-size: var(--fs-xl); margin-bottom: 0.375rem; }
+.lead { margin: 0 0 1.75rem; color: var(--ink-2); }
+form { display: grid; gap: 1.125rem; }
+.row { display: flex; justify-content: space-between; align-items: center; }
+.link { font-size: var(--fs-sm); color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px;
+  background: none; border: 0; padding: 0; cursor: pointer; }
+.link:hover { color: var(--ink); }
+.password { position: relative; }
+.password .input { padding-right: 2.75rem; }
+.password .icon-btn { position: absolute; right: 4px; top: 4px; }
+.btn--primary { min-height: 44px; font-size: var(--fs-base); }
+.demo { margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--line); font-size: var(--fs-sm); color: var(--ink-2); }
+.demo ul { margin: 0.5rem 0 0; padding: 0; list-style: none; display: grid; gap: 0.25rem; }
+.demo button { background: none; border: 0; padding: 0; font: inherit; color: var(--ink); font-weight: 600; cursor: pointer;
+  text-decoration: underline; text-underline-offset: 3px; }
+.rules { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.25rem; font-size: var(--fs-xs); color: var(--ink-3); }
+.rules li.ok { color: var(--fiber); }
+.rules li::before { content: '○ '; }
+.rules li.ok::before { content: '● '; }
+.done { padding: 1rem; border-radius: var(--r-panel); background: var(--fiber-wash); color: #0b5553; font-size: var(--fs-sm); }
