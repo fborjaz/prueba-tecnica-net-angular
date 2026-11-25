@@ -1,0 +1,4 @@
+nombres;apellidos;identificacion;correo;telefono;direccion;referencia
+Lucia;Bravo Ortiz;0981234567;lucia.bravo@correo.com;0991112233;Calle Olmedo 321 y Pedro Carbo;Frente a la iglesia, casa de dos pisos
+Marco;Zambrano;1309876543001;marco.z@empresa.com;0987776655;Av. Malecón 200, edificio Las Peñas;Piso 3, junto al ascensor principal
+Error;Fila;123;no-es-correo;0812;corta;corta

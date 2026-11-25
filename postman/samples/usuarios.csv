@@ -1,0 +1,4 @@
+usuario,nombres,apellidos,correo,identificacion,contrasena,rol
+cajero2028,Sofia,Rios Vera,sofia.rios@correo.com,0970000002,Cajero2028,CAJERO
+gestor2028,Jorge,Almeida,jorge.almeida@correo.com,0970000003,Gestor2028,GESTOR
+mal,X,Y,correo-invalido,12,corta,ADMIN
