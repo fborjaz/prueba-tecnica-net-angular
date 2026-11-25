@@ -1,0 +1,138 @@
+<app-page-header title="Dashboard" description="Usuarios, cajas, cajeros y gestores en el periodo elegido." />
+
+<!-- Filtros en una sola fila, encima de todos los indicadores -->
+<div class="filters" role="group" aria-label="Periodo">
+  <div class="presets">
+    <button type="button" class="seg" [class.seg--on]="preset() === 'today'" (click)="applyPreset('today')">Hoy</button>
+    <button type="button" class="seg" [class.seg--on]="preset() === '7'" (click)="applyPreset('7')">7 días</button>
+    <button type="button" class="seg" [class.seg--on]="preset() === '30'" (click)="applyPreset('30')">30 días</button>
+  </div>
+  <label for="d-from">Desde</label>
+  <input id="d-from" class="input" type="date" [ngModel]="from()" (ngModelChange)="setRange('from', $event)" [max]="to()" />
+  <label for="d-to">Hasta</label>
+  <input id="d-to" class="input" type="date" [ngModel]="to()" (ngModelChange)="setRange('to', $event)" [min]="from()" />
+</div>
+
+@if (data(); as d) {
+  <!-- Usuarios: cifras sueltas, no un gráfico -->
+  <section class="users panel" aria-labelledby="users-title">
+    <div class="panel__head">
+      <h2 id="users-title">Usuarios</h2>
+      <span class="subtle">{{ d.users.totalUsers }} en total: {{ d.users.administrators }} administradores, {{ d.users.managers }} gestores, {{ d.users.cashiers }} cajeros</span>
+    </div>
+    <div class="stats">
+      <div class="stat">
+        <span class="stat__value sign">{{ d.users.activeSessions }}</span>
+        <span class="stat__label">Con sesión activa</span>
+        <span class="meter" role="img" [attr.aria-label]="sessionShare() + '% de los usuarios'"><span [style.width.%]="sessionShare()"></span></span>
+      </div>
+      <div class="stat">
+        <span class="stat__value sign">{{ d.users.inactiveSessions }}</span>
+        <span class="stat__label">Sin sesión</span>
+      </div>
+      <div class="stat">
+        <span class="stat__value sign">{{ d.users.activeUsers }}</span>
+        <span class="stat__label"><span class="chip chip--ok">Activos</span></span>
+      </div>
+      <div class="stat">
+        <span class="stat__value sign">{{ d.users.pendingUsers }}</span>
+        <span class="stat__label"><span class="chip chip--pending">Por aprobar</span></span>
+      </div>
+      <div class="stat">
+        <span class="stat__value sign" [class.stat__value--alert]="d.users.blockedUsers > 0">{{ d.users.blockedUsers }}</span>
+        <span class="stat__label"><span class="chip chip--danger">Bloqueados</span></span>
+      </div>
+      <div class="stat">
+        <span class="stat__value sign">{{ d.users.inactiveUsers }}</span>
+        <span class="stat__label"><span class="chip">Inactivos</span></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="daily-title">
+    <div class="panel__head">
+      <h2 id="daily-title">Turnos por día</h2>
+      <span class="subtle">{{ totals().generated }} generados, {{ totals().attended }} atendidos</span>
+    </div>
+    <div class="panel__body">
+      <app-daily-chart [points]="d.daily" />
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="cash-title">
+    <div class="panel__head"><h2 id="cash-title">Cajas</h2></div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Caja</th><th>Estado ahora</th><th class="num">Cajeros</th><th>Turnos atendidos de los generados</th></tr></thead>
+        <tbody>
+          @for (c of d.cashes; track c.cashId) {
+            <tr>
+              <td class="primary">{{ c.description }}</td>
+              <td>
+                @if (c.currentUser) { <span class="chip chip--ok">Abierta por {{ c.currentUser }}</span> }
+                @else if (!c.active) { <span class="chip">Deshabilitada</span> }
+                @else { <span class="subtle">Cerrada</span> }
+              </td>
+              <td class="num">{{ c.assignedCashiers }}/2</td>
+              <td>
+                <div class="progress-cell">
+                  <span class="bar" role="img" [attr.aria-label]="c.turnsAttended + ' de ' + c.turnsGenerated">
+                    <span class="bar__gen" [style.width.%]="(c.turnsGenerated / maxCashAttended()) * 100">
+                      <span class="bar__att" [style.width.%]="c.turnsGenerated ? (c.turnsAttended / c.turnsGenerated) * 100 : 0"></span>
+                    </span>
+                  </span>
+                  <span class="nowrap">{{ c.turnsAttended }} de {{ c.turnsGenerated }}</span>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="two">
+    <section class="panel" aria-labelledby="cashiers-title">
+      <div class="panel__head"><h2 id="cashiers-title">Cajeros</h2></div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Cajero</th><th>Sesión</th><th class="num">Cajas</th><th class="num">Atendidos</th><th class="num">Cobrado</th></tr></thead>
+          <tbody>
+            @for (c of d.cashiers; track c.userId) {
+              <tr>
+                <td><span class="primary">{{ c.username }}</span><div class="subtle">{{ c.fullName }}</div></td>
+                <td>@if (c.sessionActive) { <span class="chip chip--ok">Activa</span> } @else { <span class="subtle">Inactiva</span> }</td>
+                <td class="num">{{ c.assignedCashes }}</td>
+                <td class="num">{{ c.turnsAttended }}</td>
+                <td class="num">{{ c.paymentsAmount | currency: 'USD' }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="subtle">No hay cajeros registrados.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="managers-title">
+      <div class="panel__head"><h2 id="managers-title">Gestores</h2></div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Gestor</th><th class="num">Turnos asignados</th><th class="num">Atendidos</th><th class="num">Usuarios creados</th></tr></thead>
+          <tbody>
+            @for (g of d.managers; track g.userId) {
+              <tr>
+                <td><span class="primary">{{ g.username }}</span><div class="subtle">{{ g.fullName }}</div></td>
+                <td class="num">{{ g.turnsAssigned }}</td>
+                <td class="num">{{ g.turnsAttended }}</td>
+                <td class="num">{{ g.usersCreated }}@if (g.usersPending) { <span class="subtle">, {{ g.usersPending }} por aprobar</span> }</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="4" class="subtle">No hay gestores registrados.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+}
