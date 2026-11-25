@@ -1,0 +1,198 @@
+@if (!ready()) {
+  <div class="placeholder" aria-busy="true"></div>
+} @else if (!session()) {
+  <!-- Sin caja abierta: elegir caja -->
+  <app-page-header title="Procesos de caja" description="Abra una de sus cajas para empezar a atender turnos." />
+
+  @if (cashes().length) {
+    <div class="open-grid">
+      @for (cash of cashes(); track cash.id) {
+        @let busyByOther = cash.currentSession && cash.currentSession.username !== username();
+        <article class="panel open-card" [class.open-card--busy]="busyByOther">
+          <app-icon name="cash" />
+          <h2 class="sign">{{ cash.description }}</h2>
+          @if (busyByOther) {
+            <p class="subtle">En uso por {{ cash.currentSession!.username }} desde {{ cash.currentSession!.openedAt | date: 'HH:mm' }}.
+              Podrá abrirla cuando la cierre.</p>
+          } @else if (!cash.active) {
+            <p class="subtle">Caja deshabilitada.</p>
+          } @else {
+            <p class="subtle">Disponible.</p>
+          }
+          <button class="btn btn--primary" type="button" [disabled]="busyByOther || !cash.active" (click)="open(cash)">Abrir caja</button>
+        </article>
+      }
+    </div>
+  } @else {
+    <app-empty icon="cash" title="No tiene cajas asignadas" hint="Pida a un gestor que le asigne una caja." />
+  }
+} @else {
+  <!-- Caja abierta -->
+  <header class="strip">
+    <div>
+      <h1 class="sign">{{ session()!.cashDescription }}</h1>
+      <span class="subtle">Abierta desde las {{ session()!.openedAt | date: 'HH:mm' }}</span>
+    </div>
+    <button class="btn btn--outline" type="button" (click)="close()" [disabled]="!!current()">
+      <app-icon name="power" /> Cerrar caja
+    </button>
+  </header>
+
+  <div class="desk">
+    <!-- Columna izquierda: tablero y cola -->
+    <aside class="side">
+      <app-turn-display [code]="current()?.code ?? null"
+        [label]="current() ? 'Atendiendo' : 'Sin turno en atención'"
+        [meta]="current() ? current()!.attentionType : waiting().length ? 'Llame al siguiente turno.' : 'No hay turnos en espera.'" />
+
+      <button class="btn btn--primary btn--block call" type="button" (click)="callNext()"
+              [disabled]="!!current() || !waiting().length || busy()">
+        @if (busy() && !current()) { <span class="spinner"></span> } @else { <app-icon name="ticket" /> }
+        Llamar siguiente
+      </button>
+
+      <section class="panel queue" aria-labelledby="queue-title">
+        <div class="panel__head">
+          <h2 id="queue-title">En espera</h2>
+          <button class="icon-btn" type="button" (click)="refreshQueue()" matTooltip="Actualizar" aria-label="Actualizar cola"><app-icon name="refresh" /></button>
+        </div>
+        @if (waiting().length) {
+          <ol class="queue__list">
+            @for (t of waiting(); track t.id) {
+              <li>
+                <span class="sign">{{ t.code }}</span>
+                <span>{{ t.attentionType }}</span>
+                <span class="subtle">{{ t.date | date: 'HH:mm' }}</span>
+              </li>
+            }
+          </ol>
+        } @else {
+          <p class="queue__empty subtle">Los turnos que asigne el gestor a esta caja aparecerán aquí.</p>
+        }
+      </section>
+    </aside>
+
+    <!-- Columna derecha: atención -->
+    <section class="work">
+      @if (current(); as turn) {
+        <ol class="steps">
+          <!-- Paso 1: cliente -->
+          <li class="panel step">
+            <div class="panel__head"><h2><span class="step__n">1</span> Identificar al cliente</h2></div>
+            <div class="panel__body">
+              <form class="lookup" (ngSubmit)="searchClient()" novalidate>
+                <div class="field">
+                  <label for="lookup-id">Identificación</label>
+                  <input id="lookup-id" class="input" [formControl]="identification" inputmode="numeric" maxlength="13"
+                         placeholder="Cédula o RUC" />
+                  <app-field-error [control]="identification" />
+                </div>
+                <button class="btn btn--dark" type="submit"><app-icon name="search" /> Buscar</button>
+              </form>
+
+              @if (clientNotFound()) {
+                <div class="notice">
+                  <span>No hay un cliente registrado con {{ clientNotFound() }}.</span>
+                  <button class="btn btn--primary btn--sm" type="button" (click)="registerClient()"><app-icon name="plus" /> Registrar cliente</button>
+                </div>
+              }
+
+              @if (client(); as c) {
+                <div class="client">
+                  <div>
+                    <strong>{{ c.fullName }}</strong>
+                    @if (!c.active) { <span class="chip">Inactivo</span> }
+                    <div class="subtle">{{ c.identification }}, {{ c.phoneNumber }}, {{ c.email }}</div>
+                    <div class="subtle">{{ c.address }}. {{ c.referenceAddress }}</div>
+                  </div>
+                  <button class="icon-btn" type="button" (click)="editClient()" matTooltip="Editar datos" aria-label="Editar cliente"><app-icon name="edit" /></button>
+                </div>
+              }
+            </div>
+          </li>
+
+          <!-- Paso 2: proceso -->
+          <li class="panel step" [class.step--locked]="!client()">
+            <div class="panel__head">
+              <h2><span class="step__n">2</span> Realizar el proceso</h2>
+              <button class="btn btn--sm" type="button" [class.btn--primary]="suggested() === 'new'" [class.btn--outline]="suggested() !== 'new'"
+                      [disabled]="!client()?.active" (click)="contractAction('new')">
+                <app-icon name="plus" /> Contratar servicio
+              </button>
+            </div>
+
+            @if (client()) {
+              @if (activeContracts().length) {
+                <div class="contracts">
+                  @for (k of activeContracts(); track k.id) {
+                    <article class="contract">
+                      <div class="contract__plan">
+                        <span class="sign">{{ k.speedMbps }}<small>Mbps</small></span>
+                        <div>
+                          <strong>{{ k.serviceName }}</strong>
+                          <div class="subtle">#{{ k.id }}, {{ k.price | currency: 'USD' }}/mes, {{ k.methodPayment }}</div>
+                          <div class="subtle">Vigente hasta {{ k.endDate | date: 'd MMM y' }}</div>
+                        </div>
+                        <app-status [code]="k.statusId" [label]="k.status" />
+                      </div>
+                      <div class="contract__actions">
+                        <button class="btn btn--sm" type="button" [class.btn--primary]="suggested() === 'payment'" [class.btn--outline]="suggested() !== 'payment'"
+                                (click)="contractAction('payment', k)"><app-icon name="card" /> Registrar pago</button>
+                        <button class="btn btn--sm" type="button" [class.btn--primary]="suggested() === 'service'" [class.btn--outline]="suggested() !== 'service'"
+                                (click)="contractAction('service', k)"><app-icon name="swap" /> Cambiar servicio</button>
+                        <button class="btn btn--sm" type="button" [class.btn--primary]="suggested() === 'method'" [class.btn--outline]="suggested() !== 'method'"
+                                (click)="contractAction('method', k)"><app-icon name="cash" /> Forma de pago</button>
+                        <button class="btn btn--sm btn--danger" type="button" (click)="cancelContract(k)"><app-icon name="ban" /> Cancelar</button>
+                      </div>
+                    </article>
+                  }
+                </div>
+              } @else {
+                <app-empty icon="wifi" title="El cliente no tiene contratos vigentes" hint="Use Contratar servicio para registrar uno." />
+              }
+
+              @if (pastContracts().length || payments().length) {
+                <details class="history">
+                  <summary>Historial: {{ pastContracts().length }} contrato(s) anteriores, {{ payments().length }} pago(s) recientes</summary>
+                  <div class="history__grid">
+                    @for (k of pastContracts(); track k.id) {
+                      <div><app-status [code]="k.statusId" [label]="k.status" /> #{{ k.id }} {{ k.serviceName }}, hasta {{ k.endDate | date: 'd MMM y' }}</div>
+                    }
+                    @for (p of payments(); track p.id) {
+                      <div><span class="chip chip--ok">Pago</span> {{ p.amount | currency: 'USD' }}, {{ p.serviceName }}, {{ p.paymentDate | date: 'd MMM, HH:mm' }}</div>
+                    }
+                  </div>
+                </details>
+              }
+            } @else {
+              <p class="panel__body subtle" style="margin:0">Busque o registre al cliente para ver sus contratos.</p>
+            }
+          </li>
+
+          <!-- Paso 3: cerrar la atención -->
+          <li class="panel step">
+            <div class="panel__head"><h2><span class="step__n">3</span> Finalizar la atención</h2></div>
+            <div class="panel__body finish">
+              <div class="field">
+                <label for="att-notes">Observaciones (opcional)</label>
+                <textarea id="att-notes" class="textarea" [formControl]="notes" maxlength="250" rows="2"></textarea>
+                <app-field-error [control]="notes" />
+              </div>
+              <div class="finish__actions">
+                <button class="btn btn--ghost" type="button" (click)="noShow()">Cliente no se presentó</button>
+                <button class="btn btn--dark" type="button" (click)="finish()" [disabled]="busy() || !client()">
+                  <app-icon name="check" /> Finalizar turno {{ turn.code }}
+                </button>
+              </div>
+            </div>
+          </li>
+        </ol>
+      } @else {
+        <div class="panel idle">
+          <app-empty icon="ticket" title="Ningún turno en atención"
+            [hint]="waiting().length ? 'Hay ' + waiting().length + ' turno(s) esperando. Use Llamar siguiente.' : 'Cuando el gestor asigne turnos a esta caja podrá llamarlos aquí.'" />
+        </div>
+      }
+    </section>
+  </div>
+}

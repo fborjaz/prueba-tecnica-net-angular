@@ -1,0 +1,168 @@
+:host { display: block; }
+
+.placeholder { height: 300px; }
+
+/* ------------------------------------------------------------------ elegir caja */
+
+.open-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+.open-card {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+  padding: 1.5rem;
+  app-icon { width: 26px; height: 26px; color: var(--amber-deep); }
+  h2 { font-size: 2rem; }
+  p { margin: 0 0 0.5rem; }
+  &--busy { background: #f7f8fa; app-icon { color: var(--ink-3); } }
+}
+
+/* ------------------------------------------------------------------ caja abierta */
+
+.strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  h1 { font-size: var(--fs-2xl); }
+}
+
+.desk {
+  display: grid;
+  grid-template-columns: minmax(300px, 400px) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+  @media (max-width: 1100px) { grid-template-columns: 1fr; }
+}
+
+.side {
+  display: grid;
+  gap: 1rem;
+  position: sticky;
+  top: 1.5rem;
+  @media (max-width: 1100px) { position: static; }
+}
+
+.call { min-height: 48px; font-size: var(--fs-base); }
+
+.queue__list {
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem 0;
+  max-height: 320px;
+  overflow-y: auto;
+
+  li {
+    display: grid;
+    grid-template-columns: 4.5rem 1fr auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 1.25rem;
+    font-size: var(--fs-sm);
+    border-bottom: 1px solid var(--line-soft);
+    &:last-child { border-bottom: 0; }
+    &:first-child .sign { color: var(--amber-deep); }
+  }
+  .sign { font-size: 1.375rem; }
+}
+
+.queue__empty { padding: 1rem 1.25rem; margin: 0; }
+
+/* ------------------------------------------------------------------ pasos de atención */
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.step {
+  &--locked { opacity: 0.75; }
+  h2 { display: flex; align-items: center; gap: 0.625rem; }
+}
+
+.step__n {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--amber);
+  font: 700 var(--fs-xs) var(--font-ui);
+}
+
+.lookup {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  .field { flex: 1; max-width: 320px; }
+  .btn { margin-top: 1.6rem; }
+}
+
+.notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--r-control);
+  background: var(--amber-wash);
+  font-size: var(--fs-sm);
+}
+
+.client {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 0.875rem 1rem;
+  border-left: 3px solid var(--fiber);
+  background: #f5f9f9;
+  border-radius: 0 var(--r-control) var(--r-control) 0;
+  strong { margin-right: 0.5rem; }
+}
+
+.contracts { display: grid; }
+
+.contract {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--line-soft);
+
+  &__plan {
+    display: grid;
+    grid-template-columns: 5.5rem 1fr auto;
+    gap: 1rem;
+    align-items: center;
+    .sign { font-size: 2.25rem; }
+    small { font: 600 var(--fs-xs) var(--font-ui); color: var(--ink-2); margin-left: 0.25rem; }
+  }
+
+  &__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+}
+
+.history {
+  padding: 0.75rem 1.25rem 1rem;
+  font-size: var(--fs-sm);
+  summary { cursor: pointer; color: var(--ink-2); }
+  &__grid { display: grid; gap: 0.375rem; margin-top: 0.625rem; }
+}
+
+.finish {
+  display: grid;
+  gap: 1rem;
+  &__actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 0.625rem; }
+}
+
+.idle { min-height: 300px; display: grid; place-items: center; }
