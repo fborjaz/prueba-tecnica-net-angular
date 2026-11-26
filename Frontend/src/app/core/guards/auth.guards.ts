@@ -2,7 +2,8 @@ import { inject } from '@angular/core';
 import { CanActivateFn, CanMatchFn, Route, Router, UrlSegment } from '@angular/router';
 import { catchError, map, of } from 'rxjs';
 import { RoleName } from '../models/api.models';
-import { MenuService, NotifyService } from '../services/app-services';
+import { MenuService } from '../services/menu.service';
+import { NotifyService } from '../services/notify.service';
 import { AuthService } from '../services/auth.service';
 
 /** Exige sesión válida; si no, redirige al login. */

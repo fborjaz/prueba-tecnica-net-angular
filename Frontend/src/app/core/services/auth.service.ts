@@ -5,7 +5,7 @@ import { Observable, finalize, map, of, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { SKIP_ERROR_TOAST } from '../interceptors/http-context';
 import { ApiResponse, LoginResponse, RoleName, UserProfile } from '../models/api.models';
-import { MenuService } from './app-services';
+import { MenuService } from './menu.service';
 
 interface StoredSession {
   token: string;

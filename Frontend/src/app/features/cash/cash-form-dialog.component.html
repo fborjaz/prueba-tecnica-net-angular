@@ -1,0 +1,18 @@
+<form class="dialog" [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <div class="dialog__head"><h2>{{ data ? 'Editar caja' : 'Nueva caja' }}</h2></div>
+  <div class="dialog__body" style="display:grid;gap:1rem">
+    @if (error()) { <div class="form-alert" role="alert">{{ error() }}</div> }
+    <div class="field">
+      <label for="c-desc">Descripción</label>
+      <input id="c-desc" class="input" formControlName="description" maxlength="50" placeholder="Caja 04 - Sucursal Sur" />
+      <app-field-error [control]="form.controls.description" />
+    </div>
+    <label class="check"><input type="checkbox" formControlName="active" /> Caja habilitada para atender</label>
+  </div>
+  <div class="dialog__foot">
+    <button class="btn btn--ghost" type="button" mat-dialog-close>Cancelar</button>
+    <button class="btn btn--primary" type="submit" [disabled]="saving()">
+      @if (saving()) { <span class="spinner"></span> Guardando… } @else { {{ data ? 'Guardar cambios' : 'Crear caja' }} }
+    </button>
+  </div>
+</form>

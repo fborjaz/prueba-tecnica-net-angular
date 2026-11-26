@@ -1,0 +1,62 @@
+<div class="dialog">
+  <div class="dialog__head">
+    <h2>{{ data.title }}</h2>
+    <p>Archivo .xlsx o .csv con una fila de cabecera. Las filas válidas se registran y las demás se informan abajo.</p>
+  </div>
+
+  <div class="dialog__body">
+    @if (!result()) {
+      <label class="drop" [class.drop--over]="dragging()" (dragover)="$event.preventDefault(); dragging.set(true)"
+             (dragleave)="dragging.set(false)" (drop)="onDrop($event)">
+        <input type="file" accept=".xlsx,.csv" class="sr-only" (change)="onPick($event)" />
+        <app-icon name="upload" />
+        @if (file(); as f) {
+          <strong>{{ f.name }}</strong>
+          <span class="subtle">{{ (f.size / 1024) | number: '1.0-1' }} KB, haga clic para cambiarlo</span>
+        } @else {
+          <strong>Arrastre el archivo aquí o haga clic para elegirlo</strong>
+          <span class="subtle">Máximo 1000 registros, 5 MB</span>
+        }
+      </label>
+
+      <p class="columns">
+        Columnas: @for (c of data.columns; track c) { <code>{{ c }}</code> }
+      </p>
+      <button class="btn btn--ghost btn--sm" type="button" (click)="downloadTemplate()">
+        <app-icon name="download" /> Descargar plantilla CSV
+      </button>
+      @if (error()) { <p class="form-alert" style="margin-top:1rem">{{ error() }}</p> }
+    } @else {
+      @let r = result()!;
+      <div class="summary">
+        <div><span class="sign">{{ r.total }}</span><small>filas leídas</small></div>
+        <div class="ok"><span class="sign">{{ r.created }}</span><small>registradas</small></div>
+        <div [class.bad]="r.failed > 0"><span class="sign">{{ r.failed }}</span><small>con errores</small></div>
+      </div>
+      @if (r.errors.length) {
+        <div class="table-wrap errors">
+          <table class="table">
+            <thead><tr><th>Fila</th><th>Registro</th><th>Motivo</th></tr></thead>
+            <tbody>
+              @for (e of r.errors; track e.row) {
+                <tr><td>{{ e.row }}</td><td class="primary">{{ e.identifier || '—' }}</td>
+                  <td>@for (m of e.messages; track $index) { <div>{{ m }}</div> }</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+  </div>
+
+  <div class="dialog__foot">
+    @if (!result()) {
+      <button class="btn btn--ghost" type="button" mat-dialog-close>Cancelar</button>
+      <button class="btn btn--primary" type="button" [disabled]="!file() || uploading()" (click)="upload()">
+        @if (uploading()) { <span class="spinner"></span> Procesando… } @else { <app-icon name="upload" /> Cargar archivo }
+      </button>
+    } @else {
+      <button class="btn btn--dark" type="button" [mat-dialog-close]="result()">Listo</button>
+    }
+  </div>
+</div>

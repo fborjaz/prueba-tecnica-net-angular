@@ -1,0 +1,66 @@
+<div class="chart">
+  <div class="chart__head">
+    <ul class="legend" aria-label="Series">
+      <li><span class="swatch swatch--generated"></span>Turnos generados</li>
+      <li><span class="swatch swatch--attended"></span>Turnos atendidos</li>
+    </ul>
+    <button class="btn btn--ghost btn--sm" type="button" (click)="showTable.set(!showTable())" [attr.aria-pressed]="showTable()">
+      {{ showTable() ? 'Ver gráfico' : 'Ver tabla' }}
+    </button>
+  </div>
+
+  @if (!showTable()) {
+    <div class="plot" (mouseleave)="hover.set(null)">
+      <svg [attr.viewBox]="'0 0 ' + w + ' ' + h" role="img"
+           [attr.aria-label]="'Turnos por día del ' + (points()[0]?.day | date: 'd MMM') + ' al ' + (points()[points().length - 1]?.day | date: 'd MMM')"
+           tabindex="0" (keydown)="onKey($event)" (focus)="hover.set(hover() ?? points().length - 1)" (blur)="hover.set(null)">
+        @for (t of ticks(); track t.value) {
+          <line class="grid" [attr.x1]="pad.left" [attr.x2]="w - pad.right" [attr.y1]="t.y" [attr.y2]="t.y" />
+          <text class="axis" [attr.x]="pad.left - 8" [attr.y]="t.y + 4" text-anchor="end">{{ t.value }}</text>
+        }
+        @for (l of xLabels(); track l.i) {
+          <text class="axis" [attr.x]="l.x" [attr.y]="h - 8" text-anchor="middle">{{ l.label }}</text>
+        }
+
+        <path class="line line--generated" [attr.d]="pathGenerated()" />
+        <path class="line line--attended" [attr.d]="pathAttended()" />
+
+        @if (last(); as p) {
+          <text class="direct" [attr.x]="p.x + 10" [attr.y]="p.yg + 4">{{ p.g }} generados</text>
+          <text class="direct" [attr.x]="p.x + 10" [attr.y]="p.ya + (Math.abs(p.ya - p.yg) < 14 ? 16 : 4)">{{ p.a }} atendidos</text>
+        }
+
+        @if (hovered(); as p) {
+          <line class="cross" [attr.x1]="p.x" [attr.x2]="p.x" [attr.y1]="pad.top" [attr.y2]="h - pad.bottom" />
+          <circle class="dot dot--generated" [attr.cx]="p.x" [attr.cy]="p.yg" r="4.5" />
+          <circle class="dot dot--attended" [attr.cx]="p.x" [attr.cy]="p.ya" r="4.5" />
+        }
+
+        <!-- Zonas de captura más anchas que la marca -->
+        @for (p of coords(); track p.i) {
+          <rect class="hit" [attr.x]="p.x - step() / 2" [attr.y]="pad.top" [attr.width]="step()" [attr.height]="h - pad.top - pad.bottom"
+                (mouseenter)="hover.set(p.i)" />
+        }
+      </svg>
+
+      @if (hovered(); as p) {
+        <div class="tooltip" [style.left.%]="(p.x / w) * 100" role="status">
+          <strong>{{ p.day | date: 'EEEE d MMM' }}</strong>
+          <span><i class="swatch swatch--generated"></i>Generados <b>{{ p.g }}</b></span>
+          <span><i class="swatch swatch--attended"></i>Atendidos <b>{{ p.a }}</b></span>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Día</th><th class="num">Generados</th><th class="num">Atendidos</th></tr></thead>
+        <tbody>
+          @for (p of points(); track p.day) {
+            <tr><td>{{ p.day | date: 'EEE d MMM' }}</td><td class="num">{{ p.turnsGenerated }}</td><td class="num">{{ p.turnsAttended }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

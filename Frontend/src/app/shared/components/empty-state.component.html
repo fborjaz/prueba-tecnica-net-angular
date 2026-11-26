@@ -1,0 +1,6 @@
+<div class="empty">
+  <app-icon [name]="icon()" />
+  <p class="empty__title">{{ title() }}</p>
+  @if (hint()) { <p class="empty__hint">{{ hint() }}</p> }
+  <ng-content />
+</div>

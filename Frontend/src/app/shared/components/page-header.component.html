@@ -1,0 +1,7 @@
+<header class="page-header">
+  <div>
+    <h1 class="sign">{{ title() }}</h1>
+    @if (description()) { <p>{{ description() }}</p> }
+  </div>
+  <div class="page-header__actions"><ng-content /></div>
+</header>

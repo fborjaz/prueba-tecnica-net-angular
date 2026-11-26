@@ -1,6 +1,8 @@
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { NgModule, Optional, SkipSelf } from '@angular/core';
-import { AuthInterceptor, ErrorInterceptor, LoadingInterceptor } from './interceptors/http.interceptors';
+import { AuthInterceptor } from './interceptors/auth.interceptor';
+import { ErrorInterceptor } from './interceptors/error.interceptor';
+import { LoadingInterceptor } from './interceptors/loading.interceptor';
 
 /**
  * Módulo núcleo: HttpClient e interceptores (se importa una sola vez en AppModule).

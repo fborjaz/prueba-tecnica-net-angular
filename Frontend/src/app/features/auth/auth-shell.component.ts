@@ -21,30 +21,7 @@ const STRANDS = [
   selector: 'app-auth-shell',
   standalone: false,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div class="auth">
-      <section class="hero" aria-hidden="true">
-        <svg class="fiber" viewBox="0 0 760 600" preserveAspectRatio="xMidYMid slice">
-          @for (d of strands; track $index) {
-            <path class="strand" [attr.d]="d" />
-            <path class="pulse" [attr.d]="d" />
-          }
-        </svg>
-        <div class="hero__copy">
-          <div class="brand">
-            <span class="brand__mark"></span>
-            <span class="sign">Ventanilla</span>
-          </div>
-          <p class="hero__title sign">Caja y turnos de tu proveedor de internet, en un solo lugar.</p>
-          <p class="hero__text">Contrata planes, registra pagos y atiende la fila de cada caja sin cambiar de pantalla.</p>
-        </div>
-      </section>
-
-      <section class="form-side">
-        <div class="form-card"><router-outlet /></div>
-      </section>
-    </div>
-  `,
+  templateUrl: './auth-shell.component.html',
   styleUrl: './auth-shell.component.scss'
 })
 export class AuthShellComponent implements AfterViewInit, OnDestroy {

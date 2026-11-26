@@ -48,9 +48,8 @@ const ICONS: Record<string, string> = {
   standalone: false,
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'app-icon', 'aria-hidden': 'true' },
-  template: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-    stroke-linecap="round" stroke-linejoin="round" [innerHTML]="svg()"></svg>`,
-  styles: `:host { display: inline-flex; width: 18px; height: 18px; flex: none; } svg { width: 100%; height: 100%; }`
+  templateUrl: './icon.component.html',
+  styleUrl: './icon.component.scss'
 })
 export class IconComponent {
   private readonly sanitizer = inject(DomSanitizer);

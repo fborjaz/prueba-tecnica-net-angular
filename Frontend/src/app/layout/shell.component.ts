@@ -15,9 +15,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import { gsap } from 'gsap';
 import { filter } from 'rxjs';
-import { LoadingService, MenuService } from '../core/services/app-services';
+import { LoadingService } from '../core/services/loading.service';
+import { MenuService } from '../core/services/menu.service';
 import { AuthService } from '../core/services/auth.service';
-import { ConfirmService } from '../shared/components/dialogs';
+import { ConfirmService } from '../shared/components/confirm.service';
 
 const ROLE_LABELS: Record<string, string> = {
   ADMINISTRADOR: 'Administrador',

@@ -1,0 +1,54 @@
+<app-page-header title="Clientes" description="Cada cliente se registra una sola vez y se identifica por su cédula o RUC.">
+  <button class="btn btn--outline" type="button" (click)="bulk()"><app-icon name="upload" /> Carga masiva</button>
+  <button class="btn btn--primary" type="button" (click)="openForm()"><app-icon name="plus" /> Registrar cliente</button>
+</app-page-header>
+
+<section class="panel">
+  <div class="toolbar">
+    <label class="sr-only" for="cl-search">Buscar</label>
+    <input id="cl-search" class="input grow" type="search" [formControl]="search" placeholder="Buscar por identificación, nombre o correo" />
+    <label class="sr-only" for="cl-active">Estado</label>
+    <select id="cl-active" class="select" [ngModel]="active()" (ngModelChange)="active.set($event); load(1)">
+      <option [ngValue]="null">Todos</option>
+      <option [ngValue]="true">Activos</option>
+      <option [ngValue]="false">Inactivos</option>
+    </select>
+  </div>
+
+  @if (result(); as r) {
+    @if (r.items.length) {
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Cliente</th><th>Identificación</th><th>Contacto</th><th>Dirección</th><th class="num">Contratos vigentes</th><th>Estado</th><th class="actions"><span class="sr-only">Acciones</span></th></tr></thead>
+          <tbody>
+            @for (c of r.items; track c.id) {
+              <tr>
+                <td class="primary">{{ c.fullName }}</td>
+                <td>{{ c.identification }}</td>
+                <td>{{ c.phoneNumber }}<div class="subtle">{{ c.email }}</div></td>
+                <td>{{ c.address }}<div class="subtle">{{ c.referenceAddress }}</div></td>
+                <td class="num">{{ c.activeContracts }}</td>
+                <td><app-status [code]="c.active" [label]="c.active ? 'Activo' : 'Inactivo'" /></td>
+                <td class="actions">
+                  <button class="icon-btn" type="button" (click)="toggle(c)" [matTooltip]="c.active ? 'Inactivar' : 'Activar'"
+                          [attr.aria-label]="c.active ? 'Inactivar' : 'Activar'"><app-icon [name]="c.active ? 'power' : 'check'" /></button>
+                  <button class="icon-btn" type="button" (click)="openForm(c)" matTooltip="Editar" aria-label="Editar"><app-icon name="edit" /></button>
+                  <button class="icon-btn" type="button" (click)="remove(c)" matTooltip="Eliminar" aria-label="Eliminar"><app-icon name="trash" /></button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="pager">
+        <span>{{ r.total }} cliente(s), página {{ r.page }} de {{ r.totalPages || 1 }}</span>
+        <div>
+          <button class="icon-btn" type="button" [disabled]="r.page <= 1" (click)="load(r.page - 1)" aria-label="Página anterior"><app-icon name="left" /></button>
+          <button class="icon-btn" type="button" [disabled]="r.page >= r.totalPages" (click)="load(r.page + 1)" aria-label="Página siguiente"><app-icon name="right" /></button>
+        </div>
+      </div>
+    } @else {
+      <app-empty icon="clients" title="No se encontraron clientes" hint="Registre uno nuevo o cargue varios desde un archivo." />
+    }
+  }
+</section>

@@ -1,0 +1,9 @@
+<div class="board" #board>
+  <span class="board__label">{{ label() }}</span>
+  <div class="flaps" role="status" aria-live="polite" [attr.aria-label]="code() ? 'Turno ' + code() : 'Sin turno en pantalla'">
+    @for (slot of slots; track slot) {
+      <span class="flap" aria-hidden="true"><span class="flap__char" #char></span></span>
+    }
+  </div>
+  <span class="board__meta">{{ meta() }}</span>
+</div>

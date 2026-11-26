@@ -2,7 +2,9 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { SharedModule } from '../../shared/shared-module';
 import { AuthShellComponent } from './auth-shell.component';
-import { ForgotPasswordComponent, LoginComponent, ResetPasswordComponent } from './auth-pages.component';
+import { ForgotPasswordComponent } from './forgot-password.component';
+import { LoginComponent } from './login.component';
+import { ResetPasswordComponent } from './reset-password.component';
 
 const routes: Routes = [
   {

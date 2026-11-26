@@ -1,0 +1,27 @@
+:host { --generated: #3a6db5; --attended: #d99000; display: block; }
+.chart__head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
+.legend { display: flex; gap: 1.25rem; margin: 0; padding: 0; list-style: none; font-size: var(--fs-sm); color: var(--ink-2); }
+.legend li { display: flex; align-items: center; gap: 0.5rem; }
+.swatch { display: inline-block; width: 12px; height: 3px; border-radius: 2px; }
+.swatch--generated { background: var(--generated); }
+.swatch--attended { background: var(--attended); }
+.plot { position: relative; }
+svg { display: block; width: 100%; height: auto; overflow: visible; }
+svg:focus-visible { outline: none; box-shadow: var(--focus); border-radius: var(--r-control); }
+.grid { stroke: var(--line-soft); stroke-width: 1; }
+.axis { fill: var(--ink-3); font-size: 11px; font-family: var(--font-ui); }
+.line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.line--generated { stroke: var(--generated); }
+.line--attended { stroke: var(--attended); }
+.direct { fill: var(--ink-2); font-size: 11px; font-family: var(--font-ui); font-weight: 600; }
+.cross { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 3 3; }
+.dot { stroke: var(--surface); stroke-width: 2; }
+.dot--generated { fill: var(--generated); }
+.dot--attended { fill: var(--attended); }
+.hit { fill: transparent; }
+.tooltip { position: absolute; top: 0; transform: translateX(-50%); display: grid; gap: 0.125rem; min-width: 150px;
+  padding: 0.5rem 0.75rem; background: var(--ink); color: #fff; border-radius: var(--r-control); font-size: var(--fs-xs);
+  pointer-events: none; box-shadow: 0 8px 24px rgba(27,36,48,0.25); }
+.tooltip strong { text-transform: capitalize; margin-bottom: 0.125rem; }
+.tooltip span { display: flex; align-items: center; gap: 0.375rem; color: #c8d1dc; }
+.tooltip b { margin-left: auto; color: #fff; }

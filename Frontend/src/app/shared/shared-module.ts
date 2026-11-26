@@ -7,10 +7,14 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterModule } from '@angular/router';
 import { ClientFormDialogComponent } from './components/client-form-dialog.component';
-import { BulkUploadDialogComponent, ConfirmDialogComponent } from './components/dialogs';
+import { BulkUploadDialogComponent } from './components/bulk-upload-dialog.component';
+import { ConfirmDialogComponent } from './components/confirm-dialog.component';
 import { IconComponent } from './components/icon.component';
 import { TurnDisplayComponent } from './components/turn-display.component';
-import { EmptyStateComponent, FieldErrorComponent, PageHeaderComponent, StatusChipComponent } from './components/ui.components';
+import { EmptyStateComponent } from './components/empty-state.component';
+import { FieldErrorComponent } from './components/field-error.component';
+import { PageHeaderComponent } from './components/page-header.component';
+import { StatusChipComponent } from './components/status-chip.component';
 
 const COMPONENTS = [
   IconComponent,

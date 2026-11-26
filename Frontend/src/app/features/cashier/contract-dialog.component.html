@@ -1,0 +1,78 @@
+<form class="dialog" [formGroup]="form" (ngSubmit)="save()" novalidate>
+  <div class="dialog__head">
+    <h2>{{ title }}</h2>
+    <p>{{ data.client.fullName }}{{ data.contract ? ', contrato #' + data.contract.id + ' (' + data.contract.serviceName + ')' : '' }}</p>
+  </div>
+
+  <div class="dialog__body" style="display:grid;gap:1rem">
+    @if (error()) { <div class="form-alert" role="alert">{{ error() }}</div> }
+
+    @if (data.action === 'new' || data.action === 'service') {
+      <fieldset class="plans">
+        <legend class="sr-only">Plan de internet</legend>
+        @for (s of services(); track s.id) {
+          <label class="plan" [class.plan--current]="s.id === data.contract?.serviceId">
+            <input type="radio" formControlName="serviceId" [value]="s.id" />
+            <span class="plan__speed sign">{{ s.speedMbps }}<small>Mbps</small></span>
+            <span class="plan__info">
+              <strong>{{ s.name }}</strong>
+              <span class="subtle">{{ s.devices.join(', ') }}</span>
+            </span>
+            <span class="plan__price">{{ s.price | currency: 'USD' : 'symbol' : '1.2-2' }}<small>/mes</small></span>
+            @if (s.id === data.contract?.serviceId) { <span class="chip">Actual</span> }
+            @else if (data.contract && s.speedMbps > data.contract.speedMbps) { <span class="chip chip--ok">Mayor velocidad</span> }
+            @else if (data.contract) { <span class="chip chip--warn">Menor velocidad</span> }
+          </label>
+        }
+      </fieldset>
+      @if (form.controls.serviceId.invalid && form.controls.serviceId.touched) {
+        <span class="field-error">Elija un plan.</span>
+      }
+      @if (data.action === 'service') {
+        <p class="note">El contrato actual quedará como sustituido y se creará uno nuevo en renovación que mantiene la fecha de fin ({{ data.contract!.endDate | date: 'd MMM y' }}).</p>
+      }
+    }
+
+    @if (data.action !== 'service') {
+      <div class="form-grid">
+        @if (data.action === 'payment') {
+          <div class="field">
+            <label for="cd-amount">Monto (USD)</label>
+            <input id="cd-amount" class="input" type="number" min="0.01" step="0.01" formControlName="amount" />
+            <span class="hint">Precio del plan: {{ data.contract!.price | currency: 'USD' }}</span>
+            <app-field-error [control]="form.controls.amount" />
+          </div>
+        }
+        <div class="field">
+          <label for="cd-method">Forma de pago</label>
+          <select id="cd-method" class="select" formControlName="methodPaymentId">
+            <option [ngValue]="null" disabled>Elegir…</option>
+            @for (m of methods(); track m.id) {
+              <option [ngValue]="m.id" [disabled]="data.action === 'method' && m.id === data.contract?.methodPaymentId">
+                {{ m.description }}{{ data.action === 'method' && m.id === data.contract?.methodPaymentId ? ' (actual)' : '' }}
+              </option>
+            }
+          </select>
+          <app-field-error [control]="form.controls.methodPaymentId" />
+        </div>
+        @if (data.action === 'new') {
+          <div class="field">
+            <label for="cd-months">Plazo</label>
+            <select id="cd-months" class="select" formControlName="months">
+              <option [ngValue]="6">6 meses</option>
+              <option [ngValue]="12">12 meses</option>
+              <option [ngValue]="24">24 meses</option>
+            </select>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="dialog__foot">
+    <button class="btn btn--ghost" type="button" mat-dialog-close>Cancelar</button>
+    <button class="btn btn--primary" type="submit" [disabled]="saving()">
+      @if (saving()) { <span class="spinner"></span> Procesando… } @else { {{ submit }} }
+    </button>
+  </div>
+</form>

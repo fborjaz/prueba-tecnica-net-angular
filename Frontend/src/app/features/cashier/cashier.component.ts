@@ -4,14 +4,15 @@ import { MatDialog } from '@angular/material/dialog';
 import { HttpErrorResponse } from '@angular/common/http';
 import { filter, switchMap } from 'rxjs';
 import { ATTENTION_STATUS, Cash, CashSession, Client, Contract, Payment, Turn } from '../../core/models/api.models';
-import { NotifyService } from '../../core/services/app-services';
+import { NotifyService } from '../../core/services/notify.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ClientsApiService } from '../../core/services/clients-api.service';
 import { AppValidators } from '../../core/utils/validators';
 import { ClientFormDialogComponent } from '../../shared/components/client-form-dialog.component';
-import { ConfirmService, DIALOG_DEFAULTS } from '../../shared/components/dialogs';
+import { ConfirmService } from '../../shared/components/confirm.service';
+import { DIALOG_DEFAULTS } from '../../shared/components/dialog-defaults';
 import { CashierApiService } from './cashier-api.service';
-import { ContractAction, ContractDialogComponent } from './contract-dialogs.component';
+import { ContractAction, ContractDialogComponent } from './contract-dialog.component';
 
 /** Proceso sugerido según el tipo de atención del turno. */
 const SUGGESTED: Record<string, ContractAction | 'cancel' | null> = {
