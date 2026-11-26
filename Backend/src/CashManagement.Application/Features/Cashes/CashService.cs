@@ -117,11 +117,7 @@ public class CashService(
             throw new ConflictException($"El cajero {user.Username} ya está asignado a esta caja.");
         }
 
-        var assigned = await db.UserCashes.CountAsync(uc => uc.CashId == cashId && uc.Active, ct);
-        if (assigned >= SecurityPolicy.MaxCashiersPerCash)
-        {
-            throw new ConflictException($"La caja ya tiene el máximo de {SecurityPolicy.MaxCashiersPerCash} cajeros asignados.");
-        }
+        Cash.EnsureRoomForCashier(await db.UserCashes.CountAsync(uc => uc.CashId == cashId && uc.Active, ct));
 
         if (assignment is null)
         {
@@ -232,7 +228,7 @@ public class CashService(
             throw new ConflictException("Tiene una atención en curso. Finalícela antes de cerrar la caja.");
         }
 
-        session.ClosedAt = DateTimeOffset.UtcNow;
+        session.Close(DateTimeOffset.UtcNow);
         await db.SaveChangesAsync(ct);
     }
 

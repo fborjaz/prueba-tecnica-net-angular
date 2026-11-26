@@ -1,4 +1,6 @@
 using CashManagement.Domain.Common;
+using CashManagement.Domain.Constants;
+using CashManagement.Domain.Exceptions;
 
 namespace CashManagement.Domain.Entities;
 
@@ -55,6 +57,51 @@ public class Contract : ISoftDelete
     public DateTimeOffset CreatedAt { get; set; }
     public int? UserCreateId { get; set; }
     public bool IsDeleted { get; set; }
+
+    /// <summary>VIG o REN: el contrato sigue prestando servicio.</summary>
+    public bool IsInForce => ContractStatuses.InForce.Contains(StatusId);
+
+    /// <summary>Contrato nuevo en estado VIG, que dura los meses indicados.</summary>
+    public static Contract Create(int clientId, int serviceId, int methodPaymentId, int months, DateTimeOffset now, int? createdBy)
+    {
+        if (months <= 0)
+            throw new BusinessException("La duración del contrato debe ser de al menos un mes.");
+
+        return new Contract
+        {
+            ClientId = clientId,
+            ServiceId = serviceId,
+            MethodPaymentId = methodPaymentId,
+            StatusId = ContractStatuses.Active,
+            StartDate = now,
+            EndDate = now.AddMonths(months),
+            CreatedAt = now,
+            UserCreateId = createdBy
+        };
+    }
+
+    public void ChangePaymentMethod(int methodPaymentId)
+    {
+        EnsureInForce("cambiar la forma de pago de");
+        if (MethodPaymentId == methodPaymentId)
+            throw new BusinessException("La nueva forma de pago debe ser diferente a la actual.");
+
+        MethodPaymentId = methodPaymentId;
+    }
+
+    /// <summary>Cancelación: estado CAN y la fecha fin pasa a ser la fecha actual.</summary>
+    public void Cancel(DateTimeOffset now)
+    {
+        EnsureInForce("cancelar");
+        StatusId = ContractStatuses.Cancelled;
+        EndDate = now;
+    }
+
+    private void EnsureInForce(string action)
+    {
+        if (!IsInForce)
+            throw new BusinessException($"Solo se puede {action} un contrato vigente.");
+    }
 }
 
 public class Payment : ISoftDelete

@@ -130,30 +130,16 @@ public class UserService(
         var user = await FindAsync(id, ct);
         EnsureManageable(user);
 
-        if (user.StatusId == UserStatuses.Pending)
-        {
-            throw new BusinessException("El usuario está pendiente de aprobación. Use la opción aprobar o rechazar.");
-        }
-
-        user.StatusId = request.StatusId;
-        if (request.StatusId == UserStatuses.Active)
-        {
-            user.FailedAttempts = 0;
-        }
-        else
-        {
-            user.SessionActive = false; // fuerza el cierre de sesión
-        }
-
+        user.ChangeStatus(request.StatusId);
         await db.SaveChangesAsync(ct);
         return await GetByIdAsync(id, ct);
     }
 
     public async Task<UserDto> ApproveAsync(int id, CancellationToken ct = default) =>
-        await ResolvePendingAsync(id, UserStatuses.Active, ct);
+        await ResolvePendingAsync(id, approve: true, ct);
 
     public async Task<UserDto> RejectAsync(int id, CancellationToken ct = default) =>
-        await ResolvePendingAsync(id, UserStatuses.Inactive, ct);
+        await ResolvePendingAsync(id, approve: false, ct);
 
     public async Task DeleteAsync(int id, CancellationToken ct = default)
     {
@@ -274,17 +260,16 @@ public class UserService(
             throw new ConflictException("La identificación ya está registrada por otro usuario.");
     }
 
-    private async Task<UserDto> ResolvePendingAsync(int id, string newStatus, CancellationToken ct)
+    private async Task<UserDto> ResolvePendingAsync(int id, bool approve, CancellationToken ct)
     {
         var user = await FindAsync(id, ct);
-        if (user.StatusId != UserStatuses.Pending)
-        {
-            throw new BusinessException("El usuario no está pendiente de aprobación.");
-        }
+        var approverId = currentUser.RequireUserId();
 
-        user.StatusId = newStatus;
-        user.UserApprovalId = currentUser.RequireUserId();
-        user.DateApproval = DateTimeOffset.UtcNow;
+        if (approve)
+            user.Approve(approverId, DateTimeOffset.UtcNow);
+        else
+            user.Reject(approverId, DateTimeOffset.UtcNow);
+
         await db.SaveChangesAsync(ct);
 
         return await GetByIdAsync(id, ct);

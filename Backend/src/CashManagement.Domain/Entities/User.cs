@@ -1,4 +1,6 @@
 using CashManagement.Domain.Common;
+using CashManagement.Domain.Constants;
+using CashManagement.Domain.Exceptions;
 
 namespace CashManagement.Domain.Entities;
 
@@ -58,6 +60,73 @@ public class User : ISoftDelete
     public ICollection<UserCash> Cashes { get; set; } = [];
 
     public string FullName => $"{Names} {LastNames}".Trim();
+
+    public bool IsBlocked => StatusId == UserStatuses.Blocked;
+
+    /// <summary>
+    /// Suma un intento fallido de inicio de sesión. Al llegar al máximo, el usuario queda
+    /// bloqueado. Devuelve cuántos intentos le quedan.
+    /// </summary>
+    public int RegisterFailedLogin()
+    {
+        FailedAttempts++;
+        var remaining = SecurityPolicy.MaxFailedAttempts - FailedAttempts;
+        if (remaining > 0) return remaining;
+
+        StatusId = UserStatuses.Blocked;
+        return 0;
+    }
+
+    public void RegisterSuccessfulLogin(DateTimeOffset now)
+    {
+        FailedAttempts = 0;
+        SessionActive = true;
+        LastLogin = now;
+    }
+
+    public void Logout(DateTimeOffset now)
+    {
+        SessionActive = false;
+        LastLogout = now;
+    }
+
+    /// <summary>Recuperar la contraseña también desbloquea al usuario.</summary>
+    public void ResetPassword(string passwordHash)
+    {
+        Password = passwordHash;
+        FailedAttempts = 0;
+        if (IsBlocked) StatusId = UserStatuses.Active;
+    }
+
+    /// <summary>Activar, inactivar o bloquear. Inactivar o bloquear cierra su sesión.</summary>
+    public void ChangeStatus(string newStatus)
+    {
+        if (StatusId == UserStatuses.Pending)
+            throw new BusinessException("El usuario está pendiente de aprobación. Use la opción aprobar o rechazar.");
+
+        if (newStatus is not (UserStatuses.Active or UserStatuses.Inactive or UserStatuses.Blocked))
+            throw new BusinessException("El estado debe ser ACT (activo), INA (inactivo) o BLO (bloqueado).");
+
+        StatusId = newStatus;
+        if (newStatus == UserStatuses.Active)
+            FailedAttempts = 0;
+        else
+            SessionActive = false;
+    }
+
+    public void Approve(int approverId, DateTimeOffset now) => ResolvePending(UserStatuses.Active, approverId, now);
+
+    public void Reject(int approverId, DateTimeOffset now) => ResolvePending(UserStatuses.Inactive, approverId, now);
+
+    private void ResolvePending(string newStatus, int approverId, DateTimeOffset now)
+    {
+        if (StatusId != UserStatuses.Pending)
+            throw new BusinessException("El usuario no está pendiente de aprobación.");
+
+        StatusId = newStatus;
+        UserApprovalId = approverId;
+        DateApproval = now;
+    }
 }
 
 public class PasswordReset

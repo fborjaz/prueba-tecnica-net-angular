@@ -71,12 +71,10 @@ public class AuthService(
 
         if (!hasher.Verify(request.Password, user.Password))
         {
-            user.FailedAttempts++;
-            var remaining = SecurityPolicy.MaxFailedAttempts - user.FailedAttempts;
+            var remaining = user.RegisterFailedLogin();
 
-            if (remaining <= 0)
+            if (user.IsBlocked)
             {
-                user.StatusId = UserStatuses.Blocked;
                 await db.SaveChangesAsync(ct);
                 _security.LogWarning("Usuario {Username} bloqueado por {Attempts} intentos fallidos de inicio de sesión",
                     username, user.FailedAttempts);
@@ -89,9 +87,7 @@ public class AuthService(
             throw new UnauthorizedException($"{InvalidCredentials} Intentos restantes: {remaining}.");
         }
 
-        user.FailedAttempts = 0;
-        user.SessionActive = true;
-        user.LastLogin = DateTimeOffset.UtcNow;
+        user.RegisterSuccessfulLogin(DateTimeOffset.UtcNow);
         await db.SaveChangesAsync(ct);
 
         var roleName = user.Rol?.Name ?? Roles.NameOf(user.RolId);
@@ -108,14 +104,14 @@ public class AuthService(
         var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId && !u.IsDeleted, ct)
                    ?? throw new NotFoundException("Usuario no encontrado.");
 
-        user.SessionActive = false;
-        user.LastLogout = DateTimeOffset.UtcNow;
+        var now = DateTimeOffset.UtcNow;
+        user.Logout(now);
 
         // Si el cajero cierra sesión, se libera la caja que tenga abierta.
         var openSessions = await db.CashSessions.Where(s => s.UserId == userId && s.ClosedAt == null).ToListAsync(ct);
         foreach (var session in openSessions)
         {
-            session.ClosedAt = DateTimeOffset.UtcNow;
+            session.Close(now);
         }
 
         await db.SaveChangesAsync(ct);
@@ -189,12 +185,7 @@ public class AuthService(
         }
 
         var user = reset.User;
-        user.Password = hasher.Hash(request.NewPassword);
-        user.FailedAttempts = 0;
-        if (user.StatusId == UserStatuses.Blocked)
-        {
-            user.StatusId = UserStatuses.Active;
-        }
+        user.ResetPassword(hasher.Hash(request.NewPassword));
         reset.Used = true;
 
         await db.SaveChangesAsync(ct);

@@ -108,18 +108,8 @@ public class ContractService(
             throw new ConflictException("El cliente ya tiene un contrato vigente con este servicio.");
         }
 
-        var now = DateTimeOffset.UtcNow;
-        var contract = new Contract
-        {
-            ClientId = request.ClientId,
-            ServiceId = request.ServiceId,
-            MethodPaymentId = request.MethodPaymentId,
-            StatusId = ContractStatuses.Active,
-            StartDate = now,
-            EndDate = now.AddMonths(request.Months),
-            CreatedAt = now,
-            UserCreateId = currentUser.UserId
-        };
+        var contract = Contract.Create(request.ClientId, request.ServiceId, request.MethodPaymentId,
+            request.Months, DateTimeOffset.UtcNow, currentUser.UserId);
 
         db.Contracts.Add(contract);
         await db.SaveChangesAsync(ct);
@@ -152,12 +142,7 @@ public class ContractService(
         var contract = await FindInForceAsync(id, ct);
         await EnsureMethodPaymentAsync(request.MethodPaymentId, ct);
 
-        if (contract.MethodPaymentId == request.MethodPaymentId)
-        {
-            throw new BusinessException("La nueva forma de pago debe ser diferente a la actual.");
-        }
-
-        contract.MethodPaymentId = request.MethodPaymentId;
+        contract.ChangePaymentMethod(request.MethodPaymentId);
         await db.SaveChangesAsync(ct);
         return await GetByIdAsync(id, ct);
     }
@@ -168,8 +153,7 @@ public class ContractService(
         await cashService.RequireOpenSessionAsync(ct);
         var contract = await FindInForceAsync(id, ct);
 
-        contract.StatusId = ContractStatuses.Cancelled;
-        contract.EndDate = DateTimeOffset.UtcNow;
+        contract.Cancel(DateTimeOffset.UtcNow);
         await db.SaveChangesAsync(ct);
         return await GetByIdAsync(id, ct);
     }

@@ -191,18 +191,12 @@ public partial class TurnService(
         var session = await cashService.RequireOpenSessionAsync(ct);
         var turn = await FindForCashAsync(turnId, session.CashId, ct);
 
-        if (turn.Attention!.StatusId != AttentionStatuses.Pending)
-        {
-            throw new BusinessException("El turno ya fue atendido o está en atención.");
-        }
-
         if (await db.Attentions.AnyAsync(a => a.UserId == session.UserId && a.StatusId == AttentionStatuses.InProgress, ct))
         {
             throw new ConflictException("Ya tiene un turno en atención. Finalícelo antes de llamar al siguiente.");
         }
 
-        turn.Attention.StatusId = AttentionStatuses.InProgress;
-        turn.Attention.UserId = session.UserId;
+        turn.Attention!.Start(session.UserId);
         await db.SaveChangesAsync(ct);
         return await GetByIdAsync(turnId, ct);
     }
@@ -214,20 +208,12 @@ public partial class TurnService(
         var turn = await FindForCashAsync(turnId, session.CashId, ct);
         var attention = turn.Attention!;
 
-        if (attention.StatusId != AttentionStatuses.InProgress || attention.UserId != session.UserId)
-        {
-            throw new BusinessException("Solo puede finalizar un turno que usted tenga en atención.");
-        }
-
         if (!await db.Clients.AnyAsync(c => c.Id == request.ClientId, ct))
         {
             throw new NotFoundException("El cliente indicado no existe.");
         }
 
-        attention.ClientId = request.ClientId;
-        attention.Notes = request.Notes?.Trim();
-        attention.StatusId = AttentionStatuses.Attended;
-        attention.AttendedAt = DateTimeOffset.UtcNow;
+        attention.Complete(session.UserId, request.ClientId, request.Notes, DateTimeOffset.UtcNow);
         await db.SaveChangesAsync(ct);
         return await GetByIdAsync(turnId, ct);
     }
@@ -238,15 +224,7 @@ public partial class TurnService(
         var turn = await FindForCashAsync(turnId, session.CashId, ct);
         var attention = turn.Attention!;
 
-        if (attention.StatusId is AttentionStatuses.Attended or AttentionStatuses.Cancelled)
-        {
-            throw new BusinessException("El turno ya fue finalizado.");
-        }
-
-        attention.StatusId = AttentionStatuses.Cancelled;
-        attention.UserId = session.UserId;
-        attention.Notes = string.IsNullOrWhiteSpace(request.Notes) ? "Cliente no se presentó." : request.Notes.Trim();
-        attention.AttendedAt = DateTimeOffset.UtcNow;
+        attention.Cancel(session.UserId, request.Notes, DateTimeOffset.UtcNow);
         await db.SaveChangesAsync(ct);
         return await GetByIdAsync(turnId, ct);
     }
