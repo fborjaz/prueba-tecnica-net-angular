@@ -119,31 +119,37 @@ BEGIN
     DECLARE @currentservice INT, @status VARCHAR(3), @enddate DATETIMEOFFSET,
             @clientid INT, @methodpaymentid INT, @newcontractid INT;
 
-    SELECT @currentservice  = service_serviceid,
-           @status          = statuscontract_statusid,
-           @enddate         = enddate,
-           @clientid        = client_clientid,
-           @methodpaymentid = methodpayment_methodpaymentid
-    FROM contract
-    WHERE contractid = @contractid AND isdeleted = 0;
-
-    IF @status IS NULL
-        THROW 50010, 'El contrato no existe.', 1;
-
-    IF @status NOT IN ('VIG', 'REN')
-        THROW 50011, 'Solo se puede cambiar el servicio de un contrato vigente.', 1;
-
     IF NOT EXISTS (SELECT 1 FROM service WHERE serviceid = @newserviceid AND active = 1 AND isdeleted = 0)
         THROW 50012, 'El nuevo servicio no existe o está inactivo.', 1;
 
-    IF @currentservice = @newserviceid
-        THROW 50013, 'El nuevo servicio debe ser diferente al servicio actual.', 1;
-
     BEGIN TRANSACTION;
+
+        -- La lectura va dentro de la transacción y bloquea la fila del contrato hasta el
+        -- COMMIT: si dos cajeros cambian el servicio a la vez, el segundo espera y luego
+        -- ve el contrato ya en SUS, así nunca se crean dos contratos REN.
+        SELECT @currentservice  = service_serviceid,
+               @status          = statuscontract_statusid,
+               @enddate         = enddate,
+               @clientid        = client_clientid,
+               @methodpaymentid = methodpayment_methodpaymentid
+        FROM contract WITH (UPDLOCK, HOLDLOCK)
+        WHERE contractid = @contractid AND isdeleted = 0;
+
+        IF @status IS NULL
+            THROW 50010, 'El contrato no existe.', 1;
+
+        IF @status NOT IN ('VIG', 'REN')
+            THROW 50011, 'Solo se puede cambiar el servicio de un contrato vigente.', 1;
+
+        IF @currentservice = @newserviceid
+            THROW 50013, 'El nuevo servicio debe ser diferente al servicio actual.', 1;
 
         UPDATE contract
         SET statuscontract_statusid = 'SUS'
-        WHERE contractid = @contractid;
+        WHERE contractid = @contractid AND statuscontract_statusid IN ('VIG', 'REN');
+
+        IF @@ROWCOUNT <> 1
+            THROW 50014, 'El contrato cambió mientras se procesaba. Vuelva a intentarlo.', 1;
 
         INSERT INTO contract (startdate, enddate, service_serviceid, statuscontract_statusid,
                               client_clientid, methodpayment_methodpaymentid, previouscontractid, usercreate)
