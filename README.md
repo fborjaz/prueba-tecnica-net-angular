@@ -63,6 +63,7 @@ docker compose exec api cat logs/audit-$(date +%Y%m%d).log
 | README por proyecto | `Backend/README.md`, `Frontend/README.md` |
 | Colección de Postman | `postman/CashManagement.postman_collection.json` |
 | Skills y prompts de IA | `AI/` |
+| Pruebas automatizadas | `Backend/tests` (`dotnet test`) y `Frontend/src/**/*.spec.ts` (`npm test`) |
 
 ## Decisiones sobre puntos ambiguos del enunciado
 

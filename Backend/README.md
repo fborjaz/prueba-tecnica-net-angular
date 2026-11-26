@@ -30,12 +30,35 @@ Backend/
 │   ├── CashManagement.Application/   Casos de uso (servicios), DTOs, validaciones, interfaces
 │   ├── CashManagement.Infrastructure/EF Core, Dapper, cifrado, JWT, correo, lectura de Excel/CSV
 │   └── CashManagement.Api/           Controladores, middleware, configuración de Serilog y Swagger
+├── tests/
+│   └── CashManagement.Tests/         Pruebas xUnit: dominio, validaciones, servicios y concurrencia
 └── Dockerfile
 ```
 
 Las dependencias apuntan siempre hacia el dominio: `Api → Application → Domain` e
 `Infrastructure → Application`. La capa de aplicación solo conoce interfaces
 (`IApplicationDbContext`, `ITokenService`, `IFieldEncryptor`, `IStoredProcedureService`...).
+
+Las reglas de negocio viven en las **entidades del dominio** y los servicios solo orquestan
+(consultan, validan permisos y guardan). Por ejemplo, `User.RegisterFailedLogin()` bloquea al
+tercer intento, `Contract.Cancel()` pasa el contrato a CAN con fecha fin de hoy y
+`Attention.Complete()` solo deja finalizar al cajero que tiene el turno.
+
+## Pruebas
+
+```bash
+dotnet test CashManagement.sln
+```
+
+| Grupo | Qué cubre |
+|-------|-----------|
+| Dominio | Bloqueo al tercer intento, aprobación y rechazo, cambios de estado, cancelación y forma de pago del contrato, flujo de atención de un turno, cupo de 2 cajeros |
+| Validaciones | Reglas del enunciado para usuario, contraseña, identificación y correo |
+| Servicios (base en memoria) | Caja ocupada por otro cajero, tercer cajero en una caja, cierre con turno en atención, turnos solo para cajas abiertas |
+| Concurrencia (SQL Server real) | 8 cambios de servicio simultáneos sobre el mismo contrato crean un solo contrato REN |
+
+La prueba de concurrencia se ejecuta si se define la variable `CASHMANAGEMENT_TEST_SQL` con la
+cadena de conexión a una base creada con los scripts; si no, se omite.
 
 ## Ejecución
 
@@ -113,6 +136,9 @@ también a la **Caja 02**.
   (`cashsession`); si el otro cajero la tiene abierta, recibe un 409. Lo garantiza también un
   índice único filtrado en la BD (`WHERE closedat IS NULL`).
 - Todos los procesos de caja (contratos, pagos, atención de turnos) exigen una caja abierta.
+- **Cambio de servicio concurrente:** `sp_change_contract_service` lee y bloquea el contrato dentro
+  de la transacción (`UPDLOCK, HOLDLOCK`) y solo lo actualiza si sigue vigente, así dos cambios
+  simultáneos nunca crean dos contratos REN.
 - Código del turno: 2 letras mayúsculas y 4 números, con el prefijo del tipo de atención
   (`AC0001` Atención al cliente, `PS0001` Pago de servicio, `CT`, `CS`, `CF`, `CC`). Es
   correlativo por tipo y por día, lo genera `sp_generate_turn` con bloqueo para evitar

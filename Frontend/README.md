@@ -40,6 +40,30 @@ src/app/
     └── services/            Planes de internet (administrador)
 ```
 
+### Convención
+
+- **Un artefacto por archivo:** cada componente en su `nombre.component.ts` con su
+  `nombre.component.html` y `nombre.component.scss`; cada servicio, interceptor o guard en su
+  propio archivo.
+- **El `*-module.ts` solo declara y enruta.** No contiene componentes ni servicios.
+- **Cada funcionalidad accede a la API con su `*-api.service.ts`**; los componentes no usan
+  `HttpClient` directamente.
+- El nombre del archivo es el de la clase en kebab-case (`ConfirmService` → `confirm.service.ts`).
+
+## Pruebas
+
+```bash
+npm test
+```
+
+Vitest con el builder `unit-test` de Angular:
+
+| Archivo | Qué cubre |
+|---------|-----------|
+| `core/guards/auth.guards.spec.ts` | Sesión, pantallas de invitado, rol permitido y ruta presente en el menú de la BD |
+| `core/interceptors/interceptors.spec.ts` | JWT y cabeceras, cierre de sesión ante 401, mensajes de la API, `SKIP_ERROR_TOAST` |
+| `core/utils/validators.spec.ts` | Reglas de usuario, contraseña, identificación y teléfono; coincidencia de contraseñas |
+
 ## Requisitos de la prueba
 
 | Requisito | Implementación |
